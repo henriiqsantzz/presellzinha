@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificação de Segurança</title>
+    <style>
+        :root {
+            --bg-color: #fafafa;
+            --text-main: #1d1d1d;
+            --text-muted: #595959;
+            --border-color: #e0e0e0;
+            --primary-color: #f6821f; 
+            --success-color: #008000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .challenge-container {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            max-width: 500px;
+            width: 100%;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .challenge-container h1 {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 12px;
+        }
+
+        .challenge-container p {
+            font-size: 15px;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .verify-widget {
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #fcfcfc;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .verify-widget.success {
+            border-color: var(--success-color);
+            background-color: #f0fff0;
+        }
+
+        .verify-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            z-index: 2;
+        }
+
+        .hold-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 4px;
+            border: 2px solid var(--text-muted);
+            background: transparent;
+            cursor: pointer;
+            position: relative;
+            outline: none;
+            transition: all 0.2s;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation; /* Melhora a resposta no mobile */
+        }
+
+        .hold-btn:active {
+            transform: scale(0.95);
+        }
+
+        .hold-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0%;
+            background-color: var(--text-muted);
+            transition: height 0.1s linear;
+        }
+
+        .verify-text {
+            font-size: 14px;
+            font-weight: 500;
+            user-select: none;
+            text-align: left;
+        }
+
+        .provider-logo {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: right;
+            z-index: 2;
+            min-width: 80px;
+        }
+        
+        .provider-logo strong {
+            display: block;
+            font-size: 13px;
+            color: var(--text-main);
+        }
+
+        .footer-details {
+            font-size: 12px;
+            color: #888;
+            text-align: left;
+            border-top: 1px solid var(--border-color);
+            padding-top: 20px;
+            margin-top: 20px;
+        }
+
+        .footer-details span {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .spinner {
+            display: none;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--text-muted);
+            animation: spin 1s ease-in-out infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .checkmark {
+            display: none;
+            width: 24px;
+            height: 24px;
+            color: var(--success-color);
+            flex-shrink: 0;
+        }
+
+        .checkmark svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Ajustes para telas bem pequenas (Mobile típico de TikTok) */
+        @media (max-width: 380px) {
+            .verify-widget {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            .provider-logo {
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="challenge-container">
+        <h1>Confirme que você não é um robô</h1>
+        <p>Antes de prosseguirmos para a página, precisamos verificar se você é humano.</p>
+
+        <div class="verify-widget" id="verifyWidget">
+            <div class="verify-left">
+                <button class="hold-btn" id="holdBtn"></button>
+                <div class="spinner" id="spinner"></div>
+                <div class="checkmark" id="checkmark">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <span class="verify-text" id="verifyText">Pressione e segure para confirmar</span>
+            </div>
+            <div class="provider-logo">
+                Protegido por
+                <strong>WebShield PRO</strong>
+            </div>
+        </div>
+
+        <div class="footer-details">
+            <span id="rayId">Ray ID: Gerando...</span>
+            <span id="ipAddress">Endereço IP: Identificando...</span>
+            <span>Desempenho e segurança de rede de nível empresarial.</span>
+        </div>
+    </div>
+
+    <script>
+        const holdBtn = document.getElementById('holdBtn');
+        const verifyText = document.getElementById('verifyText');
+        const spinner = document.getElementById('spinner');
+        const checkmark = document.getElementById('checkmark');
+        const verifyWidget = document.getElementById('verifyWidget');
+        
+        let holdTimer;
+        let progress = 0;
+        let isVerified = false;
+        const requiredHoldTime = 1200; // Reduzi de 1.5s para 1.2s para evitar perda de tráfego (bounce rate)
+        const intervalTime = 50; 
+
+        function startHold(e) {
+            if (isVerified) return;
+            // Previne o comportamento padrão (como abrir menu de contexto)
+            if (e.cancelable) e.preventDefault(); 
+            
+            holdTimer = setInterval(() => {
+                progress += (intervalTime / requiredHoldTime) * 100;
+                holdBtn.style.setProperty('--pseudo-height', `${progress}%`);
+                
+                const styleId = 'dynamic-btn-style';
+                let styleEl = document.getElementById(styleId);
+                if (!styleEl) {
+                    styleEl = document.createElement('style');
+                    styleEl.id = styleId;
+                    document.head.appendChild(styleEl);
+                }
+                styleEl.innerHTML = `.hold-btn::before { height: ${progress}%; background-color: #1d1d1d; }`;
+
+                if (progress >= 100) {
+                    completeVerification();
+                }
+            }, intervalTime);
+        }
+
+        function endHold() {
+            if (isVerified) return;
+            clearInterval(holdTimer);
+            progress = 0;
+            
+            const styleEl = document.getElementById('dynamic-btn-style');
+            if (styleEl) styleEl.innerHTML = `.hold-btn::before { height: 0%; }`;
+        }
+
+        function completeVerification() {
+            clearInterval(holdTimer);
+            isVerified = true;
+            
+            holdBtn.style.display = 'none';
+            spinner.style.display = 'block';
+            verifyText.innerText = 'Verificação concluída. Aguarde...';
+
+            setTimeout(() => {
+                spinner.style.display = 'none';
+                checkmark.style.display = 'block';
+                verifyWidget.classList.add('success');
+                verifyText.innerText = 'Sucesso! Redirecionando...';
+                verifyText.style.color = 'var(--success-color)';
+
+                // Redirecionamento direto para a sua oferta
+                setTimeout(() => {
+                    window.location.href = "https://elsevepromocoes.online/elseve/"; 
+                }, 800); // Tempo reduzido para o redirecionamento ser mais ágil
+
+            }, 1200); // Tempo de "verificação" simulado um pouco mais rápido para tráfego pago
+        }
+
+        // Eventos
+        holdBtn.addEventListener('mousedown', startHold);
+        holdBtn.addEventListener('mouseup', endHold);
+        holdBtn.addEventListener('mouseleave', endHold);
+
+        holdBtn.addEventListener('touchstart', startHold, {passive: false});
+        holdBtn.addEventListener('touchend', endHold);
+        holdBtn.addEventListener('touchcancel', endHold);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const chars = '0123456789abcdef';
+            let rayId = '';
+            for(let i = 0; i < 16; i++) rayId += chars[Math.floor(Math.random() * chars.length)];
+            document.getElementById('rayId').innerHTML = `Ray ID: <code>${rayId}</code>`;
+
+            const ipParts = Array.from({length: 4}, () => Math.floor(Math.random() * 255));
+            document.getElementById('ipAddress').innerHTML = `Seu IP: <code>${ipParts.join('.')}</code>`;
+        });
+    </script>
+</body>
+</html>
